@@ -1,0 +1,67 @@
+IDENTIFICATION DIVISION.
+PROGRAM-ID. MAINPROGRAM.
+
+ENVIRONMENT DIVISION.
+INPUT-OUTPUT SECTION.
+FILE-CONTROL.
+    SELECT ACCOUNT-FILE ASSIGN TO "CONTIDB.DAT"
+        ORGANIZATION IS LINE SEQUENTIAL.
+
+DATA DIVISION.
+FILE SECTION.
+FD  ACCOUNT-FILE.
+COPY "ACCOUNT-STRUCTURE.CPY".
+
+WORKING-STORAGE SECTION.
+01  WS-USER-CHOICE        PIC X(1).
+01  WS-ACCOUNT-NUMBER     PIC X(10).
+01  WS-TRANSACTION-AMOUNT PIC S9(7)V99.
+01  WS-NEW-BALANCE        PIC S9(7)V99.
+
+01  COMMAREA.
+    05  CA-ACCOUNT-NUMBER  PIC X(10).
+    05  CA-TRANSACTION-AMOUNT PIC S9(7)V99.
+    05  CA-NEW-BALANCE     PIC S9(7)V99.
+
+PROCEDURE DIVISION.
+
+    MAIN-PARA.
+        DISPLAY "Benvenuto nel sistema bancario!"
+        DISPLAY "1. Consulta il saldo"
+        DISPLAY "2. Esegui una transazione (deposito/prelievo)"
+        DISPLAY "Scegli l'operazione (1 o 2):"
+        ACCEPT WS-USER-CHOICE
+
+        IF WS-USER-CHOICE = '1'
+            PERFORM CONSULTA-SALDO
+        ELSE IF WS-USER-CHOICE = '2'
+            PERFORM TRANSAZIONE
+        ELSE
+            DISPLAY "Scelta non valida"
+        END-IF.
+
+        STOP RUN.
+
+    CONSULTA-SALDO.
+        DISPLAY "Inserisci il numero del conto:"
+        ACCEPT WS-ACCOUNT-NUMBER
+
+        MOVE WS-ACCOUNT-NUMBER TO CA-ACCOUNT-NUMBER
+        CALL 'BALANCEMODULE'
+            USING COMMAREA
+
+        DISPLAY "Il saldo corrente del conto " WS-ACCOUNT-NUMBER " è: " CA-NEW-BALANCE.
+
+    TRANSAZIONE.
+        DISPLAY "Inserisci il numero del conto:"
+        ACCEPT WS-ACCOUNT-NUMBER
+
+        DISPLAY "Inserisci l'importo della transazione (positivo per depositi, negativo per prelievi):"
+        ACCEPT WS-TRANSACTION-AMOUNT
+
+        MOVE WS-ACCOUNT-NUMBER TO CA-ACCOUNT-NUMBER
+        MOVE WS-TRANSACTION-AMOUNT TO CA-TRANSACTION-AMOUNT
+        CALL 'TRANSACTIONMODULE'
+            USING COMMAREA
+
+        DISPLAY "Il saldo aggiornato del conto " WS-ACCOUNT-NUMBER " è: " CA-NEW-BALANCE.
